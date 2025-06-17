@@ -1,7 +1,10 @@
 package main
 
-//NOTE:"bufio" scanner
-//https://stackoverflow.com/questions/8757389/reading-a-file-line-by-line-in-go
+//NOTE:
+//https://pkg.go.dev/bufio#example-Scanner-Words
+//https://codingchallenges.fyi/challenges/challenge-wc/
+//https://go.dev/blog/error-handling-and-go
+//https://pkg.go.dev/os
 
 import (
 	"bufio"
@@ -44,26 +47,35 @@ func main() {
 		fmt.Println(text.Size(), "file:", text.Name())
 	case "-l":
 		var scanner *bufio.Scanner = bufio.NewScanner(file)
-		var line_counter int = 0
+		var lines_c int = 0
 		for scanner.Scan() {
-			line_counter++
+			lines_c++
 			// fmt.Println(scanner.Text())
 		}
 
-		fmt.Println(line_counter, filepath)
-		if err := scanner.Err(); err != nil {
-			fmt.Println(err)
-		}
+		fmt.Println(lines_c, filepath)
+		err_log_exit(scanner.Err())
 	case "-w":
 		var scanner *bufio.Scanner = bufio.NewScanner(file)
-		var line_counter int = 0
+		var words_c int = 0
 		scanner.Split(bufio.ScanWords)
 		for scanner.Scan() {
-			line_counter++
+			words_c++
 			// fmt.Println(scanner.Text())
 		}
 
-		fmt.Println(line_counter, filepath)
+		fmt.Println(words_c, filepath)
+		err_log_exit(scanner.Err())
+	case "-m":
+		var scanner *bufio.Scanner = bufio.NewScanner(file)
+		var chars_c int = 0
+		scanner.Split(bufio.ScanRunes)
+		for scanner.Scan() {
+			chars_c++
+			// fmt.Println(scanner.Text())
+		}
+
+		fmt.Println(chars_c, filepath)
 		err_log_exit(scanner.Err())
 	default:
 		fmt.Println("Non existing arg")
