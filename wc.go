@@ -1,6 +1,10 @@
 package main
 
+//NOTE:"bufio" scanner
+//https://stackoverflow.com/questions/8757389/reading-a-file-line-by-line-in-go
+
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"strings"
@@ -35,11 +39,36 @@ func main() {
 
 	switch cmline_option {
 	case "-c":
-		{
-			text, err := file.Stat()
-			err_log_exit(err)
-			fmt.Println(text.Size(), "file:", text.Name())
+		text, err := file.Stat()
+		err_log_exit(err)
+		fmt.Println(text.Size(), "file:", text.Name())
+	case "-l":
+		var scanner *bufio.Scanner = bufio.NewScanner(file)
+		var line_counter int = 0
+		for scanner.Scan() {
+			line_counter++
+			// fmt.Println(scanner.Text())
 		}
+
+		fmt.Println(line_counter, filepath)
+		if err := scanner.Err(); err != nil {
+			fmt.Println(err)
+		}
+	case "-w":
+		var scanner *bufio.Scanner = bufio.NewScanner(file)
+		var line_counter int = 0
+		scanner.Split(bufio.ScanWords)
+		for scanner.Scan() {
+			line_counter++
+			// fmt.Println(scanner.Text())
+		}
+
+		fmt.Println(line_counter, filepath)
+		err_log_exit(scanner.Err())
+	default:
+		fmt.Println("Non existing arg")
+		fmt.Println("-c: Bytes and name of file")
+		fmt.Println("-l: Lines of text and name of file")
 	}
 
 	file.Close()
