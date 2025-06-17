@@ -20,69 +20,99 @@ func err_log_exit(err error) {
 	}
 }
 
+func bytes_count(filepath string) int64 {
+	file, err := os.Open(filepath)
+	err_log_exit(err)
+	text, err := file.Stat()
+	err_log_exit(err)
+	file.Close()
+	return text.Size()
+}
+
+func lines_count(filepath string) int64 {
+	file, err := os.Open(filepath)
+	err_log_exit(err)
+	var scanner *bufio.Scanner = bufio.NewScanner(file)
+	var lines_c int64 = 0
+	for scanner.Scan() {
+		lines_c++
+	}
+
+	err_log_exit(scanner.Err())
+	file.Close()
+	return lines_c
+}
+
+func words_count(filepath string) int64 {
+	file, err := os.Open(filepath)
+	err_log_exit(err)
+	var scanner *bufio.Scanner = bufio.NewScanner(file)
+	var words_c int64 = 0
+	scanner.Split(bufio.ScanWords)
+	for scanner.Scan() {
+		words_c++
+		// fmt.Println(scanner.Text())
+	}
+
+	err_log_exit(scanner.Err())
+	file.Close()
+	return words_c
+}
+
+func runes_count(filepath string) int64 {
+	file, err := os.Open(filepath)
+	err_log_exit(err)
+	var scanner *bufio.Scanner = bufio.NewScanner(file)
+	var chars_c int64 = 0
+	scanner.Split(bufio.ScanRunes)
+	for scanner.Scan() {
+		chars_c++
+		// fmt.Println(scanner.Text())
+	}
+	err_log_exit(scanner.Err())
+	file.Close()
+	return chars_c
+}
 func main() {
 	var arg_slice = os.Args[1:len(os.Args)]
-	if len(arg_slice) != 2 {
-		err_log_exit(fmt.Errorf("Too litle or too many args. try 'go run . -c text.txt'"))
-	}
+	// if len(arg_slice) < 2 {
+	// 	err_log_exit(fmt.Errorf("Too litle or too many args. try 'go run . -c text.txt'"))
+	// }
+
 	// fmt.Println(arg_slice)
 
 	var filepath string
 	var cmline_option string
+
 	if strings.Contains(arg_slice[0], "-") {
 		cmline_option = arg_slice[0]
 		filepath = arg_slice[1]
-	} else {
+	} else if len(arg_slice) > 1 && strings.Contains(arg_slice[1], "-") {
 		cmline_option = arg_slice[1]
+		filepath = arg_slice[0]
+	} else {
 		filepath = arg_slice[0]
 	}
 
-	file, err := os.Open(filepath)
-	err_log_exit(err)
-
 	switch cmline_option {
+	case "":
+		fmt.Println(lines_count(filepath), words_count(filepath), bytes_count(filepath), filepath)
 	case "-c":
-		text, err := file.Stat()
-		err_log_exit(err)
-		fmt.Println(text.Size(), "file:", text.Name())
+		fmt.Println(bytes_count(filepath), "file:", filepath)
 	case "-l":
-		var scanner *bufio.Scanner = bufio.NewScanner(file)
-		var lines_c int = 0
-		for scanner.Scan() {
-			lines_c++
-			// fmt.Println(scanner.Text())
-		}
-
-		fmt.Println(lines_c, filepath)
-		err_log_exit(scanner.Err())
+		fmt.Println(lines_count(filepath), filepath)
 	case "-w":
-		var scanner *bufio.Scanner = bufio.NewScanner(file)
-		var words_c int = 0
-		scanner.Split(bufio.ScanWords)
-		for scanner.Scan() {
-			words_c++
-			// fmt.Println(scanner.Text())
-		}
-
-		fmt.Println(words_c, filepath)
-		err_log_exit(scanner.Err())
+		fmt.Println(words_count(filepath), filepath)
 	case "-m":
-		var scanner *bufio.Scanner = bufio.NewScanner(file)
-		var chars_c int = 0
-		scanner.Split(bufio.ScanRunes)
-		for scanner.Scan() {
-			chars_c++
-			// fmt.Println(scanner.Text())
-		}
-
-		fmt.Println(chars_c, filepath)
-		err_log_exit(scanner.Err())
+		fmt.Println(runes_count(filepath), filepath)
 	default:
 		fmt.Println("Non existing arg")
-		fmt.Println("-c: Bytes and name of file")
-		fmt.Println("-l: Lines of text and name of file")
+		fmt.Println("-c: Bytes in file")
+		fmt.Println("-l: Lines in file")
+		fmt.Println("-w: Words in file")
+		fmt.Println("-m: Characters in file")
+
 	}
 
-	file.Close()
 	os.Exit(0)
 }
