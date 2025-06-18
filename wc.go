@@ -5,6 +5,7 @@ package main
 //https://codingchallenges.fyi/challenges/challenge-wc/
 //https://go.dev/blog/error-handling-and-go
 //https://pkg.go.dev/os
+//https://freshman.tech/snippets/go/read-console-input/
 
 import (
 	"bufio"
@@ -59,6 +60,7 @@ func words_count(filepath string) int64 {
 	return words_c
 }
 
+// TODO: NewScanner needs a io.Reader, need to change the args to this function and probably o os.Open before so I can send stdin
 func runes_count(filepath string) int64 {
 	file, err := os.Open(filepath)
 	err_log_exit(err)
@@ -74,24 +76,70 @@ func runes_count(filepath string) int64 {
 	return chars_c
 }
 func main() {
-	var arg_slice = os.Args[1:len(os.Args)]
 	// if len(arg_slice) < 2 {
 	// 	err_log_exit(fmt.Errorf("Too litle or too many args. try 'go run . -c text.txt'"))
 	// }
 
 	// fmt.Println(arg_slice)
 
+	//WARN:Reader
+	// reader := bufio.NewReader(os.Stdin)
+	// text, _ := reader.ReadString('\n')
+	// if text != "" {
+	// 	fmt.Println(text)
+	// } else {
+	// 	fmt.Println("erro")
+	// }
+
+	//No args no filepath
+	//Args no filepath
+	//No args filepath
+	//Args and filepath
+
+	var arg_slice = os.Args[1:len(os.Args)]
 	var filepath string
 	var cmline_option string
 
-	if strings.Contains(arg_slice[0], "-") {
-		cmline_option = arg_slice[0]
-		filepath = arg_slice[1]
-	} else if len(arg_slice) > 1 && strings.Contains(arg_slice[1], "-") {
-		cmline_option = arg_slice[1]
-		filepath = arg_slice[0]
-	} else {
-		filepath = arg_slice[0]
+	switch len(arg_slice) {
+	case 0:
+		{
+			//No args no filepath
+			//NOTE: filepath and cmline_option are defaulted by go to ""
+		}
+	case 1:
+		{
+			if strings.Contains(arg_slice[0], "-") {
+				//Args no filepath
+				cmline_option = arg_slice[0]
+			} else {
+				//No args filepath
+				filepath = arg_slice[0]
+			}
+		}
+	case 2:
+		{
+			//Args and filepath
+			if strings.Contains(arg_slice[0], "-") {
+				//Arg in 0
+				cmline_option = arg_slice[0]
+				filepath = arg_slice[1]
+			}
+			if strings.Contains(arg_slice[1], "-") {
+				//Arg in 1
+				cmline_option = arg_slice[1]
+				filepath = arg_slice[0]
+			}
+		}
+	default:
+		{
+			err_log_exit(fmt.Errorf("Multiple args not supported"))
+		}
+
+	}
+
+	if filepath == "" {
+		fmt.Println(lines_count(filepath), words_count(filepath), bytes_count(filepath), filepath)
+		os.Exit(0)
 	}
 
 	switch cmline_option {
@@ -111,7 +159,6 @@ func main() {
 		fmt.Println("-l: Lines in file")
 		fmt.Println("-w: Words in file")
 		fmt.Println("-m: Characters in file")
-
 	}
 
 	os.Exit(0)
