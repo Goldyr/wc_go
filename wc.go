@@ -1,19 +1,5 @@
 package main
 
-//NOTE:
-//https://pkg.go.dev/bufio#example-Scanner-Words
-//https://codingchallenges.fyi/challenges/challenge-wc/
-//https://go.dev/blog/error-handling-and-go
-//https://pkg.go.dev/os
-//https://freshman.tech/snippets/go/read-console-input/
-
-//WARN:
-//Problems: Scanning a file the file empties the scanner making
-//You have re read the file every instance
-//I didnt have this problem because I was only doing one scan at the time eg: words only, lines only
-//Suspect: File pointer
-//Gotta use Seek(0,0) to reset file after using them
-
 import (
 	"bufio"
 	"bytes"
@@ -63,7 +49,6 @@ func words_count(file []byte) int {
 	scanner.Split(bufio.ScanWords)
 	for scanner.Scan() {
 		words_c++
-		// fmt.Println(scanner.Text())
 	}
 
 	err_log_exit(scanner.Err())
@@ -77,10 +62,27 @@ func runes_count(file []byte) int {
 	scanner.Split(bufio.ScanRunes)
 	for scanner.Scan() {
 		chars_c++
-		// fmt.Println(scanner.Text())
 	}
 	err_log_exit(scanner.Err())
 	return chars_c
+}
+
+func give_me_bytes(filepath string) []byte {
+	var raw_bytes []byte
+	var err error
+	if filepath == "" {
+		reader := bufio.NewReader(os.Stdin)
+		raw_bytes, err = io.ReadAll(reader)
+	} else {
+		file, err := os.Open(filepath)
+		err_log_exit(err)
+
+		reader := bufio.NewReader(file)
+		raw_bytes, err = io.ReadAll(reader)
+		file.Close()
+	}
+	err_log_exit(err)
+	return raw_bytes
 }
 
 func main() {
@@ -91,16 +93,16 @@ func main() {
 	switch len(arg_slice) {
 	case 0:
 		{
-			//No args no filepath
+			//No arg no filepath
 			//NOTE: filepath and cmline_option are defaulted by go to ""
 		}
 	case 1:
 		{
 			if strings.Contains(arg_slice[0], "-") {
-				//Args no filepath
+				//Arg no filepath
 				cmline_option = arg_slice[0]
 			} else {
-				//No args filepath
+				//No arg filepath
 				filepath = arg_slice[0]
 			}
 		}
@@ -125,39 +127,27 @@ func main() {
 
 	}
 
-	//NOFILE
-	if filepath == "" {
-		reader := bufio.NewReader(os.Stdin)
-		file, err := io.ReadAll(reader)
-		err_log_exit(err)
-		bytes := bytes_count(file)
-		words := words_count(file)
-		lines := lines_count(file)
-		fmt.Println(lines, words, bytes, "standard input/output")
-		os.Exit(0)
-	}
+	//NOTE: Either brings the bytes or quits
+	var raw_bytes []byte = give_me_bytes(filepath)
 
-	//FILE
-	file, err := os.Open(filepath)
-	err_log_exit(err)
-	reader := bufio.NewReader(file)
-	wawa, err := io.ReadAll(reader)
+	if filepath == "" {
+		filepath = "STDIN"
+	}
 
 	switch cmline_option {
 	case "":
-		bytes := bytes_count(wawa)
-		words := words_count(wawa)
-		lines := lines_count(wawa)
+		bytes := bytes_count(raw_bytes)
+		words := words_count(raw_bytes)
+		lines := lines_count(raw_bytes)
 		fmt.Println(lines, words, bytes, filepath)
-		// fmt.Println(lines_count(wawa), words_count(file), bytes_count(file), filepath)
 	case "-c":
-		fmt.Println(bytes_count(wawa), "file:", filepath)
+		fmt.Println(bytes_count(raw_bytes), filepath)
 	case "-l":
-		fmt.Println(lines_count(wawa), filepath)
+		fmt.Println(lines_count(raw_bytes), filepath)
 	case "-w":
-		fmt.Println(words_count(wawa), filepath)
+		fmt.Println(words_count(raw_bytes), filepath)
 	case "-m":
-		fmt.Println(runes_count(wawa), filepath)
+		fmt.Println(runes_count(raw_bytes), filepath)
 	default:
 		fmt.Println("Non existing arg")
 		fmt.Println("-c: Bytes in file")
@@ -166,6 +156,5 @@ func main() {
 		fmt.Println("-m: Characters in file")
 	}
 
-	file.Close()
 	os.Exit(0)
 }
