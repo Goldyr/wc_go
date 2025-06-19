@@ -16,6 +16,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"io"
 	"os"
@@ -30,8 +31,9 @@ func err_log_exit(err error) {
 	return
 }
 
-func bytes_count(file io.Reader) int {
-	var scanner *bufio.Scanner = bufio.NewScanner(file)
+func bytes_count(file []byte) int {
+	reader := bytes.NewReader(file)
+	var scanner *bufio.Scanner = bufio.NewScanner(reader)
 	var bytes_c int = 0
 	scanner.Split(bufio.ScanBytes)
 	for scanner.Scan() {
@@ -42,9 +44,10 @@ func bytes_count(file io.Reader) int {
 	return bytes_c
 }
 
-func lines_count(file io.Reader) int64 {
-	var scanner *bufio.Scanner = bufio.NewScanner(file)
-	var lines_c int64 = 0
+func lines_count(file []byte) int {
+	reader := bytes.NewReader(file)
+	var scanner *bufio.Scanner = bufio.NewScanner(reader)
+	var lines_c int = 0
 	for scanner.Scan() {
 		lines_c++
 	}
@@ -53,9 +56,10 @@ func lines_count(file io.Reader) int64 {
 	return lines_c
 }
 
-func words_count(file io.Reader) int64 {
-	var scanner *bufio.Scanner = bufio.NewScanner(file)
-	var words_c int64 = 0
+func words_count(file []byte) int {
+	reader := bytes.NewReader(file)
+	var scanner *bufio.Scanner = bufio.NewScanner(reader)
+	var words_c int = 0
 	scanner.Split(bufio.ScanWords)
 	for scanner.Scan() {
 		words_c++
@@ -66,9 +70,10 @@ func words_count(file io.Reader) int64 {
 	return words_c
 }
 
-func runes_count(file io.Reader) int64 {
-	var scanner *bufio.Scanner = bufio.NewScanner(file)
-	var chars_c int64 = 0
+func runes_count(file []byte) int {
+	reader := bytes.NewReader(file)
+	var scanner *bufio.Scanner = bufio.NewScanner(reader)
+	var chars_c int = 0
 	scanner.Split(bufio.ScanRunes)
 	for scanner.Scan() {
 		chars_c++
@@ -77,6 +82,7 @@ func runes_count(file io.Reader) int64 {
 	err_log_exit(scanner.Err())
 	return chars_c
 }
+
 func main() {
 	var arg_slice = os.Args[1:len(os.Args)]
 	var filepath string
@@ -119,49 +125,39 @@ func main() {
 
 	}
 
+	//NOFILE
 	if filepath == "" {
 		reader := bufio.NewReader(os.Stdin)
-
-		// text, _ := reader.ReadString('\n')
-		//WARN:Reader
-		// reader := bufio.NewReader(os.Stdin)
-		// text, _ := reader.ReadString('\n')
-		// if text != "" {
-		// 	fmt.Println(text)
-		// } else {
-		// 	fmt.Println("erro")
-		// }
-		// fmt.Println(lines_count(reader), words_count(reader), "TODO")
-
-		copy := reader
-		copy2 := reader
-		bytes := bytes_count(reader)
-		words := words_count(copy)
-		lines := lines_count(copy2)
-		fmt.Println(lines, words, bytes, filepath)
+		file, err := io.ReadAll(reader)
+		err_log_exit(err)
+		bytes := bytes_count(file)
+		words := words_count(file)
+		lines := lines_count(file)
+		fmt.Println(lines, words, bytes, "standard input/output")
 		os.Exit(0)
 	}
 
+	//FILE
 	file, err := os.Open(filepath)
 	err_log_exit(err)
+	reader := bufio.NewReader(file)
+	wawa, err := io.ReadAll(reader)
 
 	switch cmline_option {
 	case "":
-		bytes := bytes_count(file)
-		file.Seek(0, 0)
-		words := words_count(file)
-		file.Seek(0, 0)
-		lines := lines_count(file)
+		bytes := bytes_count(wawa)
+		words := words_count(wawa)
+		lines := lines_count(wawa)
 		fmt.Println(lines, words, bytes, filepath)
-		// fmt.Println(lines_count(file), words_count(file), bytes_count(file), filepath)
+		// fmt.Println(lines_count(wawa), words_count(file), bytes_count(file), filepath)
 	case "-c":
-		fmt.Println(bytes_count(file), "file:", filepath)
+		fmt.Println(bytes_count(wawa), "file:", filepath)
 	case "-l":
-		fmt.Println(lines_count(file), filepath)
+		fmt.Println(lines_count(wawa), filepath)
 	case "-w":
-		fmt.Println(words_count(file), filepath)
+		fmt.Println(words_count(wawa), filepath)
 	case "-m":
-		fmt.Println(runes_count(file), filepath)
+		fmt.Println(runes_count(wawa), filepath)
 	default:
 		fmt.Println("Non existing arg")
 		fmt.Println("-c: Bytes in file")
