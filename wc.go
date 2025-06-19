@@ -17,56 +17,6 @@ func err_log_exit(err error) {
 	return
 }
 
-func bytes_count(file []byte) int {
-	reader := bytes.NewReader(file)
-	var scanner *bufio.Scanner = bufio.NewScanner(reader)
-	var bytes_c int = 0
-	scanner.Split(bufio.ScanBytes)
-	for scanner.Scan() {
-		bytes_c++
-	}
-
-	err_log_exit(scanner.Err())
-	return bytes_c
-}
-
-func lines_count(file []byte) int {
-	reader := bytes.NewReader(file)
-	var scanner *bufio.Scanner = bufio.NewScanner(reader)
-	var lines_c int = 0
-	for scanner.Scan() {
-		lines_c++
-	}
-
-	err_log_exit(scanner.Err())
-	return lines_c
-}
-
-func words_count(file []byte) int {
-	reader := bytes.NewReader(file)
-	var scanner *bufio.Scanner = bufio.NewScanner(reader)
-	var words_c int = 0
-	scanner.Split(bufio.ScanWords)
-	for scanner.Scan() {
-		words_c++
-	}
-
-	err_log_exit(scanner.Err())
-	return words_c
-}
-
-func runes_count(file []byte) int {
-	reader := bytes.NewReader(file)
-	var scanner *bufio.Scanner = bufio.NewScanner(reader)
-	var chars_c int = 0
-	scanner.Split(bufio.ScanRunes)
-	for scanner.Scan() {
-		chars_c++
-	}
-	err_log_exit(scanner.Err())
-	return chars_c
-}
-
 func give_me_bytes(filepath string) []byte {
 	var raw_bytes []byte
 	var err error
@@ -83,6 +33,23 @@ func give_me_bytes(filepath string) []byte {
 	}
 	err_log_exit(err)
 	return raw_bytes
+}
+
+// Takes bytes and counts them depeding on the buifio.SplitFunc given
+// bufio.ScanWords
+// bufio.ScanBytes
+// bufio.ScanLines
+// bufio.ScanRunes (chars)
+func count_by_function(file []byte, split_function bufio.SplitFunc) int {
+	reader := bytes.NewReader(file)
+	var scanner *bufio.Scanner = bufio.NewScanner(reader)
+	var counter int = 0
+	scanner.Split(split_function)
+	for scanner.Scan() {
+		counter++
+	}
+	err_log_exit(scanner.Err())
+	return counter
 }
 
 func main() {
@@ -136,18 +103,22 @@ func main() {
 
 	switch cmline_option {
 	case "":
-		bytes := bytes_count(raw_bytes)
-		words := words_count(raw_bytes)
-		lines := lines_count(raw_bytes)
+		bytes := count_by_function(raw_bytes, bufio.ScanBytes)
+		words := count_by_function(raw_bytes, bufio.ScanWords)
+		lines := count_by_function(raw_bytes, bufio.ScanLines)
 		fmt.Println(lines, words, bytes, filepath)
 	case "-c":
-		fmt.Println(bytes_count(raw_bytes), filepath)
+		bytes := count_by_function(raw_bytes, bufio.ScanBytes)
+		fmt.Println(bytes, filepath)
 	case "-l":
-		fmt.Println(lines_count(raw_bytes), filepath)
+		lines := count_by_function(raw_bytes, bufio.ScanLines)
+		fmt.Println(lines, filepath)
 	case "-w":
-		fmt.Println(words_count(raw_bytes), filepath)
+		words := count_by_function(raw_bytes, bufio.ScanWords)
+		fmt.Println(words, filepath)
 	case "-m":
-		fmt.Println(runes_count(raw_bytes), filepath)
+		runes := count_by_function(raw_bytes, bufio.ScanRunes)
+		fmt.Println(runes, filepath)
 	default:
 		fmt.Println("Non existing arg")
 		fmt.Println("-c: Bytes in file")
